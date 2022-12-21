@@ -11,7 +11,7 @@ RUN docker-php-ext-enable imagick
 
 RUN apt-get update
 RUN apt-get install -y libzip-dev zip \
-  && docker-php-ext-install zip
+    && docker-php-ext-install zip
 
 
 COPY ./ /var/www/html
@@ -32,30 +32,21 @@ RUN chown -R www-data:www-data /var/www/html
 RUN chmod -R 755 /var/www/html
 
 # ---these packages are required for xhgui (start)---
-# install profiler using repository
-RUN curl "http://pecl.php.net/get/xhprof-2.3.2.tgz" -fsL -o ./xhprof-2.3.2.tgz && \
-    mkdir /var/xhprof && tar xf ./xhprof-2.3.2.tgz -C /var/xhprof && \
-    cd /var/xhprof/xhprof-2.3.2/extension && \
-    phpize && \
-    ./configure && \
-    make && \
-    make install
+# install and enable xhprof
+RUN pecl install xhprof-2.3.7 \
+    && docker-php-ext-enable xhprof    
 
-# enable profiler    
-RUN docker-php-ext-enable xhprof    
-
-# install mongodb extension
+# install and enable mongodb extension
 RUN pecl install mongodb \
-    &&  echo "extension=mongodb.so" > $PHP_INI_DIR/conf.d/mongo.ini
+    && echo "extension=mongodb.so" > $PHP_INI_DIR/conf.d/mongo.ini
 # ---these packages are required for xhgui (end)---
     
 #install phpunit
-RUN curl --location --output /usr/local/bin/phpunit https://phar.phpunit.de/phpunit-5.7.27.phar
-
-RUN chmod +x /usr/local/bin/phpunit
+RUN curl --location --output /usr/local/bin/phpunit https://phar.phpunit.de/phpunit-5.7.27.phar \
+    && chmod +x /usr/local/bin/phpunit
 
 #install and enable xdebugger
-RUN pecl install xdebug-3.1.4 \
+RUN pecl install xdebug-3.1.5 \
     && docker-php-ext-enable xdebug
 
 CMD ["apache2-foreground"]
