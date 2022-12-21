@@ -36,7 +36,7 @@ services:
      - mysql_db:/var/lib/mysql
     
   xhgui:
-    image: edyan/xhgui:php7.2
+    image: edyan/xhgui:php7.4
     ports:
       - "8000:80"
     volumes:
