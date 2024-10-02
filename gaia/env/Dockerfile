@@ -11,7 +11,8 @@ RUN docker-php-ext-enable imagick
 
 RUN apt-get update
 RUN apt-get install -y libzip-dev zip \
-    && docker-php-ext-install zip
+    && docker-php-ext-install zip \
+    && apt-get install -y git
 
 # composer installation
 RUN curl -sS https://getcomposer.org/installer | php
