@@ -1,0 +1,11 @@
+# Build args for gaia-env:next (PHP 8.5 / Phalcon 5). Read by build.sh and .github/workflows/gaia-env.yml.
+# The published version tag is <PHP version from BASE_IMAGE>-phalcon<PHALCON_VERSION>.
+# Empty PSR_VERSION and MONGODB_VERSION skip those extensions.
+BASE_IMAGE=php:8.5.12-apache
+DEBIAN_ARCHIVE=0
+PHALCON_VERSION=5.23.0
+PSR_VERSION=
+XDEBUG_VERSION=3.5.3
+XHPROF_VERSION=2.3.10
+MONGODB_VERSION=
+PHPUNIT_VERSION=11.5.0

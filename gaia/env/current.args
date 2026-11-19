@@ -1,0 +1,10 @@
+# Build args for gaia-env:current (PHP 7.4 / Phalcon 4). Read by build.sh and .github/workflows/gaia-env.yml.
+# The published version tag is <PHP version from BASE_IMAGE>-phalcon<PHALCON_VERSION>.
+BASE_IMAGE=php:7.4.21-apache-buster
+DEBIAN_ARCHIVE=1
+PHALCON_VERSION=4.1.2
+PSR_VERSION=1.1.0
+XDEBUG_VERSION=3.1.5
+XHPROF_VERSION=2.3.7
+MONGODB_VERSION=1.15.3
+PHPUNIT_VERSION=9.6.21
