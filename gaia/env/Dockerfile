@@ -1,49 +1,47 @@
-FROM mileschou/phalcon:7.4-apache
+# Gaia runtime image: PHP + Apache + Phalcon and the extensions Gaia needs.
+# One recipe for both stacks; see build.sh and README.md for the two targets.
+ARG BASE_IMAGE=php:7.4.21-apache-buster
+FROM ${BASE_IMAGE}
 
-RUN apt-get update
+ARG PHALCON_VERSION=4.1.2
+# psr is only needed by Phalcon 4; leave empty for Phalcon 5.
+ARG PSR_VERSION=1.1.0
+ARG XDEBUG_VERSION=3.1.5
+ARG XHPROF_VERSION=2.3.7
+# Empty skips the extension.
+ARG MONGODB_VERSION=1.15.3
+ARG IMAGICK_VERSION=
+ARG PHPUNIT_VERSION=9.6.21
+# Debian 10 is end of life; set to 1 to point apt at archive.debian.org.
+ARG DEBIAN_ARCHIVE=0
 
-RUN apt-get install -y default-mysql-client iputils-ping
-RUN docker-php-ext-install mysqli pdo pdo_mysql
+RUN if [ "$DEBIAN_ARCHIVE" = "1" ]; then \
+        sed -i 's|deb.debian.org|archive.debian.org|g; s|security.debian.org/debian-security|archive.debian.org/debian-security|g; /buster-updates/d' /etc/apt/sources.list; \
+    fi \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        $PHPIZE_DEPS git unzip zip postgresql-client iputils-ping \
+        libpq-dev libzip-dev libmagickwand-dev libcurl4-openssl-dev libxml2-dev libonig-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update && apt-get install -y libmagickwand-dev --no-install-recommends && rm -rf /var/lib/apt/lists/*
-RUN printf "\n" | pecl install imagick
-RUN docker-php-ext-enable imagick
+RUN docker-php-ext-install -j"$(nproc)" pdo pdo_pgsql zip exif mbstring curl xml
 
-RUN apt-get update
-RUN apt-get install -y libzip-dev zip \
-    && docker-php-ext-install zip \
-    && apt-get install -y git
+RUN pecl install imagick${IMAGICK_VERSION:+-$IMAGICK_VERSION} < /dev/null && docker-php-ext-enable imagick
 
-# composer installation
-RUN curl -sS https://getcomposer.org/installer | php
-RUN mv composer.phar /usr/local/bin/composer
-RUN chmod +x /usr/local/bin/composer
+RUN if [ -n "$PSR_VERSION" ]; then pecl install psr-${PSR_VERSION} && docker-php-ext-enable psr; fi \
+    && MAKEFLAGS="-j$(nproc)" pecl install phalcon-${PHALCON_VERSION} && docker-php-ext-enable phalcon
 
-WORKDIR /var/www/html
+RUN pecl install xdebug-${XDEBUG_VERSION} && docker-php-ext-enable xdebug \
+    && pecl install xhprof-${XHPROF_VERSION} && docker-php-ext-enable xhprof \
+    && if [ -n "$MONGODB_VERSION" ]; then pecl install mongodb-${MONGODB_VERSION} && docker-php-ext-enable mongodb; fi
 
-# install dependencies
-RUN a2enmod rewrite
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
-# change ownership to www-data
-RUN chown -R www-data:www-data /var/www/html
-RUN chmod -R 755 /var/www/html
-
-# ---these packages are required for xhgui (start)---
-# install and enable xhprof
-RUN pecl install xhprof-2.3.7 \
-    && docker-php-ext-enable xhprof    
-
-# install and enable mongodb extension
-RUN pecl install mongodb \
-    && echo "extension=mongodb.so" > $PHP_INI_DIR/conf.d/mongo.ini
-# ---these packages are required for xhgui (end)---
-    
-#install phpunit
-RUN curl --location --output /usr/local/bin/phpunit https://phar.phpunit.de/phpunit-5.7.27.phar \
+RUN curl -fsSL -o /usr/local/bin/phpunit https://phar.phpunit.de/phpunit-${PHPUNIT_VERSION}.phar \
     && chmod +x /usr/local/bin/phpunit
 
-#install and enable xdebugger
-RUN pecl install xdebug-3.1.5 \
-    && docker-php-ext-enable xdebug
+RUN a2enmod rewrite
 
+WORKDIR /var/www/html
+EXPOSE 80
 CMD ["apache2-foreground"]

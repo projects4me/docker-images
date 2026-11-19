@@ -1,0 +1,5 @@
+# Files that run inside Linux containers or CI keep LF on every checkout.
+*.sh       text eol=lf
+*.args     text eol=lf
+*.yml      text eol=lf
+Dockerfile text eol=lf
